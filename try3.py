@@ -44,10 +44,20 @@ while True:
     
     mask=cv2.inRange(imgHSV,lowerBound,upperBound)
     
+#perform dilation on mask image     
+    kernel = np.ones((4,4), np.uint8)
+    #img_er=cv2.erode(mask, kernel, iterations=1)
+    img_dil=cv2.dilate(mask, kernel, iterations=2)
+    kernel = np.ones((2,2), np.uint8)
+    img_erose=cv2.erode(img_dil, kernel, iterations=2)
+    #cv2.imshow('erose', img_er)
+    #cv2.imshow('dilate',img_dil)
+   # cv2.imshow('dilate+erose',img_erose)
     
+    
+    mask= img_erose
 #search face and put a rectangle of blue colour on face
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)#
-    
     faces = face_cascade.detectMultiScale(gray, 1.3, 5) #
     for (x,y,w,h) in faces:#
         #cv2.rectangle(output,(x,y),(x+w,y+h),(255,255,0),2) #
