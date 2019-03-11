@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar  4 23:30:30 2019
-
-@author: Romit Chand Verma
-"""
-
 # OpenCV program to detect face in real time 
 # import libraries of python OpenCV 
 # where its functionality resides 
-import cv2 
+
 
 # load the required trained XML classifiers 
 # https://github.com/Itseez/opencv/blob/master/ 
@@ -17,46 +10,113 @@ import cv2
 # object we want to detect a cascade function is trained 
 # from a lot of positive(faces) and negative(non-faces) 
 # images. 
-face_cascade = cv2.CascadeClassifier('C:\\Users\\Romit Chand Verma\\Anaconda3\\Library\\etc\\haarcascades\\haarcascade_frontalface_default.xml') 
 
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar  6 19:28:06 2019
+@author: Romit Chand Verma
+"""
 
+#trying to mix face recog and max contour i.e single hand
+import numpy as np
+import cv2
 
+face_cascade = cv2.CascadeClassifier('C:\\Users\\DELL\\Anaconda\\Library\\etc\\haarcascades\\haarcascade_frontalface_default.xml') 
 
-# capture frames from a camera 
-cap = cv2.VideoCapture(0) 
+lowerBound=np.array([0,48,80])
+upperBound=np.array([20, 255, 255])
+#lowerBound=np.array([5,20,70])
+#upperBound=np.array([19,255,255])
 
-# loop runs if capturing has been initialized. 
-while 1: 
+kernelOpen=np.ones((5,5))
+cam=cv2.VideoCapture(0)
+X=1
+Y=1
+Xn=1
+Yn=1
+areaArray = []
+while True:
+    ret,img=cam.read()
+    
+    image = img
+    
+    imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+    
+    mask=cv2.inRange(imgHSV,lowerBound,upperBound)
+    
+#perform dilation on mask image     
+    kernel = np.ones((4,4), np.uint8)
+    #img_er=cv2.erode(mask, kernel, iterations=1)
+    img_dil=cv2.dilate(mask, kernel, iterations=2)
+    kernel = np.ones((2,2), np.uint8)
+    img_erose=cv2.erode(img_dil, kernel, iterations=2)
+    #cv2.imshow('erose', img_er)
+    #cv2.imshow('dilate',img_dil)
+   # cv2.imshow('dilate+erose',img_erose)
+    
+    
+    mask= img_erose
+#search face and put a rectangle of blue colour on face
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)#
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5) #
+    for (x,y,w,h) in faces:#
+        #cv2.rectangle(output,(x,y),(x+w,y+h),(255,255,0),2) #
+        cv2.rectangle(image,(x,y),(x+w,y+h),(255,255,0),2)
+        cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+        print(x,y,w,h)#
+        X=x
+        Y=y
+        Xn=x+w
+        Yn=y+h
+    for i in range(X,Xn-2):
+        for j in range(Y,Yn-2):
+            mask[j][i]=0
+    
+    
+    output = cv2.bitwise_and(image, image, mask=mask)
 
-	# reads frames from a camera 
-	ret, img = cap.read() 
+    ret,thresh = cv2.threshold(mask, 40, 255, 0)
+    im2,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    try:
+        
+        if len(contours) != 0:
+            for i, c in enumerate(contours):
+                area = cv2.contourArea(c)
+                areaArray.append(area)
+                #first sort the array by area
+        #    sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
+                
+                # draw in blue the contours that were founded
+                #  cv2.drawContours(output, contours, -1, 255, 0)
+                
+                #find the biggest area
+            sorteddata= sorted(contours,key=cv2.contourArea)
+            c = max(contours, key = cv2.contourArea)
+                
+            x,y,w,h = cv2.boundingRect(c)        
+                # draw the first rectangle (in green)    
+            cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+            cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
+                #find the nth largest contour [n-1][1], in this case 2
+ #           first = sorteddata[0][1]
+            #second = sorteddata[1][1]       
+            second=sorteddata[-2]
+  #          x,y,w,h = cv2.boundingRect(first)        
+        # draw the first rectangle (in green)    
+   #     cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+    #    cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
 
-	# convert to gray scale of each frames 
-	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
+            x,y,w,h = cv2.boundingRect(second)        
+    # draw the first rectangle (in green)    
+            cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+            cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
+    except:
+        print("limb not found")
 
-	# Detects faces of different sizes in the input image 
-	faces = face_cascade.detectMultiScale(gray, 1.3, 5) 
+ # show the images   
+    cv2.imshow("Result", np.hstack([image, output]))
+    cv2.imshow("mask",mask)
 
-	for (x,y,w,h) in faces: 
-		# To draw a rectangle in a face 
-		cv2.rectangle(img,(x,y),(x+w,y+h),(255,255,0),2) 
-    #    cv2.rectangle(img,(x,y),(x+w,y+h),(255,255,0),2)
-        #cv2.circle(img,(x,y),x,(255,255,0),2) 
-#        cv2.circle(img, (x,y), 20, (222,225,0), 3)
-        #cv2.circle(img,(447,63), 63, (0,0,255), -1)
-		cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (255,0,0), 3)
-	#	roi_gray = gray[y:y+h, x:x+w] 
-	#	roi_color = img[y:y+h, x:x+w] 
- 
-	cv2.imshow('img',img) 
-
-	# Wait for Esc key to stop 
-	k = cv2.waitKey(30) & 0xff
-	if k == 27: 
-		break
-
-# Close the window 
-cap.release() 
-
-# De-allocate any associated memory usage 
-cv2.destroyAllWindows() 
+    cv2.waitKey(10)
