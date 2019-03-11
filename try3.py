@@ -1,7 +1,19 @@
+# OpenCV program to detect face in real time 
+# import libraries of python OpenCV 
+# where its functionality resides 
+
+
+# load the required trained XML classifiers 
+# https://github.com/Itseez/opencv/blob/master/ 
+# data/haarcascades/haarcascade_frontalface_default.xml 
+# Trained XML classifiers describes some features of some 
+# object we want to detect a cascade function is trained 
+# from a lot of positive(faces) and negative(non-faces) 
+# images. 
+
 # -*- coding: utf-8 -*-
 """
 Created on Wed Mar  6 19:28:06 2019
-
 @author: Romit Chand Verma
 """
 
@@ -9,10 +21,13 @@ Created on Wed Mar  6 19:28:06 2019
 import numpy as np
 import cv2
 
-face_cascade = cv2.CascadeClassifier('C:\\Users\\Romit Chand Verma\\Anaconda3\\Library\\etc\\haarcascades\\haarcascade_frontalface_default.xml') 
+face_cascade = cv2.CascadeClassifier('C:\\Users\\DELL\\Anaconda\\Library\\etc\\haarcascades\\haarcascade_frontalface_default.xml') 
 
-lowerBound=np.array([5,20,70])
-upperBound=np.array([19,255,255])
+lowerBound=np.array([0,48,80])
+upperBound=np.array([20, 255, 255])
+#lowerBound=np.array([5,20,70])
+#upperBound=np.array([19,255,255])
+
 kernelOpen=np.ones((5,5))
 cam=cv2.VideoCapture(0)
 X=1
@@ -22,10 +37,13 @@ Yn=1
 areaArray = []
 while True:
     ret,img=cam.read()
+    
     image = img
     
     imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+    
     mask=cv2.inRange(imgHSV,lowerBound,upperBound)
+    
     
 #search face and put a rectangle of blue colour on face
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)#
@@ -48,41 +66,44 @@ while True:
 
     ret,thresh = cv2.threshold(mask, 40, 255, 0)
     im2,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    if len(contours) != 0:
-        for i, c in enumerate(contours):
-            area = cv2.contourArea(c)
-            areaArray.append(area)
-            #first sort the array by area
-            sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
-
-    # draw in blue the contours that were founded
-      #  cv2.drawContours(output, contours, -1, 255, 0)
-      
-    #find the biggest area
-        c = max(contours, key = cv2.contourArea)
-
-        x,y,w,h = cv2.boundingRect(c)        
-    # draw the first rectangle (in green)    
-        cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
-        cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
-        #find the nth largest contour [n-1][1], in this case 2
- #       first = sorteddata[0][1]
-        second = sorteddata[1][1]       
-
-  #      x,y,w,h = cv2.boundingRect(first)        
-    # draw the first rectangle (in green)    
+    try:
+        
+        if len(contours) != 0:
+            for i, c in enumerate(contours):
+                area = cv2.contourArea(c)
+                areaArray.append(area)
+                #first sort the array by area
+        #    sorteddata = sorted(zip(areaArray, contours), key=lambda x: x[0], reverse=True)
+                
+                # draw in blue the contours that were founded
+                #  cv2.drawContours(output, contours, -1, 255, 0)
+                
+                #find the biggest area
+            sorteddata= sorted(contours,key=cv2.contourArea)
+            c = max(contours, key = cv2.contourArea)
+                
+            x,y,w,h = cv2.boundingRect(c)        
+                # draw the first rectangle (in green)    
+            cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
+                #find the nth largest contour [n-1][1], in this case 2
+ #           first = sorteddata[0][1]
+            #second = sorteddata[1][1]       
+            second=sorteddata[-2]
+  #          x,y,w,h = cv2.boundingRect(first)        
+        # draw the first rectangle (in green)    
    #     cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
     #    cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
 
-        x,y,w,h = cv2.boundingRect(second)        
+            x,y,w,h = cv2.boundingRect(second)        
     # draw the first rectangle (in green)    
-        cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
-        cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
+    except:
+        print("limb not found")
 
  # show the images   
     cv2.imshow("Result", np.hstack([image, output]))
     cv2.imshow("mask",mask)
 
     cv2.waitKey(10)
-
