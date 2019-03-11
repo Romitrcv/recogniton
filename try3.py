@@ -27,7 +27,7 @@ lowerBound=np.array([0,48,80])
 upperBound=np.array([20, 255, 255])
 #lowerBound=np.array([5,20,70])
 #upperBound=np.array([19,255,255])
-
+cen_h2_x=cen_h2_y=cen_h1_x=cen_h1_y=cen_face_x=cen_face_y=0
 kernelOpen=np.ones((5,5))
 cam=cv2.VideoCapture(0)
 X=1
@@ -62,7 +62,10 @@ while True:
     for (x,y,w,h) in faces:#
         #cv2.rectangle(output,(x,y),(x+w,y+h),(255,255,0),2) #
         cv2.rectangle(image,(x,y),(x+w,y+h),(255,255,0),2)
-        print(x,y,w,h)#
+        cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+        cen_face_x=(int(x+w/2))
+        cen_face_y=(int(y+w/2))
+      #  print(x,y,w,h)#
         X=x
         Y=y
         Xn=x+w
@@ -95,6 +98,9 @@ while True:
             x,y,w,h = cv2.boundingRect(c)        
                 # draw the first rectangle (in green)    
             cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+            cen_h1_x=(int(x+w/2))
+            cen_h1_y=(int(y+w/2))
             cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
                 #find the nth largest contour [n-1][1], in this case 2
  #           first = sorteddata[0][1]
@@ -108,6 +114,9 @@ while True:
             x,y,w,h = cv2.boundingRect(second)        
     # draw the first rectangle (in green)    
             cv2.rectangle(output,(x,y),(x+w,y+h),(0,255,0),2)
+            cv2.circle(img,(int(x+w/2),int(y+w/2)), 5, (0,0,255), 3)
+            cen_h2_x=(int(x+w/2))
+            cen_h2_y=(int(y+w/2))
             cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
     except:
         print("limb not found")
@@ -115,5 +124,8 @@ while True:
  # show the images   
     cv2.imshow("Result", np.hstack([image, output]))
     cv2.imshow("mask",mask)
-
+    print "\n\ncentroids of \nface \nx=",cen_face_x,"\ty=",cen_face_y 
+    print "\ncentroids of \nhand 1 \nx=",cen_h1_x,"\ty=",cen_h1_y 
+    print "\ncentroids of \nhand 2 \nx=",cen_h2_x,"\ty=",cen_h2_y 
+    
     cv2.waitKey(10)
